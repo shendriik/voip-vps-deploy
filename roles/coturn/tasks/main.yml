@@ -4,6 +4,16 @@
     name: coturn
     state: present
 
+- name: Ensure coturn log file exists
+  ansible.builtin.file:
+    path: /var/log/turnserver.log
+    state: touch
+    owner: turnserver
+    group: turnserver
+    mode: '0640'
+    access_time: preserve
+    modification_time: preserve
+
 - name: Deploy coturn configuration
   ansible.builtin.template:
     src: turnserver.conf.j2
