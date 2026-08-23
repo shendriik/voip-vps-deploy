@@ -64,3 +64,10 @@ swap_size_mb: 2048
 # SIP flood protection
 sip_hashlimit_rate: 10/sec
 sip_hashlimit_burst: 30
+
+# coturn
+coturn_enabled: true
+coturn_listening_port: 3478
+coturn_realm: dusnet.duckdns.org
+coturn_min_port: 49160
+coturn_max_port: 49200

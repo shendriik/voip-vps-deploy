@@ -1,0 +1,25 @@
+---
+- name: Install coturn
+  ansible.builtin.apt:
+    name: coturn
+    state: present
+
+- name: Deploy coturn configuration
+  ansible.builtin.template:
+    src: turnserver.conf.j2
+    dest: /etc/turnserver.conf
+    owner: root
+    group: turnserver
+    mode: '0640'
+  no_log: true
+  diff: false
+  notify: Restart coturn
+
+- name: Enable and start coturn
+  ansible.builtin.systemd:
+    name: coturn
+    enabled: true
+    state: started
+  when:
+    - coturn_enabled
+    - not ansible_check_mode

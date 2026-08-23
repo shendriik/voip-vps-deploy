@@ -27,6 +27,10 @@
       tags:
         - firewall
 
+    - role: coturn
+      tags:
+        - coturn
+
     - role: sip_watch
       tags:
         - watcher

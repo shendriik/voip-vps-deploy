@@ -1,0 +1,20 @@
+listening-ip={{ ansible_default_ipv4.address }}
+relay-ip={{ ansible_default_ipv4.address }}
+
+listening-port={{ coturn_listening_port }}
+
+fingerprint
+lt-cred-mech
+
+realm={{ coturn_realm }}
+user={{ vault_coturn_user }}:{{ vault_coturn_password }}
+
+min-port={{ coturn_min_port }}
+max-port={{ coturn_max_port }}
+
+no-tls
+no-dtls
+
+verbose
+simple-log
+log-file=/var/log/turnserver.log

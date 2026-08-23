@@ -166,4 +166,7 @@ iptables -t nat -I PREROUTING 1 -j "$PRE_CHAIN"
 remove_all_jumps nat POSTROUTING "$POST_CHAIN"
 iptables -t nat -I POSTROUTING 1 -j "$POST_CHAIN"
 
+# This VPS is a gateway. Forwarding is deny-by-default.
+iptables -P FORWARD DROP
+
 echo "VoIP firewall applied successfully."
