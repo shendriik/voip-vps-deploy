@@ -4,6 +4,9 @@
   connection: local
   gather_facts: true
 
+  vars_files:
+    - group_vars/vault.yml
+
   pre_tasks:
     - name: Require root
       ansible.builtin.assert:
