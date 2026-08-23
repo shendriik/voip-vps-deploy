@@ -2,9 +2,11 @@
 - name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
+  when: not ansible_check_mode
 
 - name: Apply VoIP firewall
   ansible.builtin.systemd:
     name: voip-firewall
     state: restarted
     daemon_reload: true
+  when: not ansible_check_mode

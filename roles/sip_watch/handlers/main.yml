@@ -2,8 +2,10 @@
 - name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
+  when: not ansible_check_mode
 
 - name: Restart sip-watch
   ansible.builtin.systemd:
     name: sip-watch
     state: restarted
+  when: not ansible_check_mode
