@@ -14,6 +14,8 @@
     owner: root
     group: root
     mode: '0600'
+  diff: false
+  no_log: true
   notify: Restart awg0
 
 - name: Enable and start awg0
