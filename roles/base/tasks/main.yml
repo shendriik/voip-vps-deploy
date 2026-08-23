@@ -43,10 +43,17 @@
     name: fail2ban
     enabled: true
 
+- name: Check swapfile
+  ansible.builtin.stat:
+    path: /swapfile
+  register: swapfile_stat
+
 - name: Create swapfile
   ansible.builtin.command:
     cmd: fallocate -l {{ swap_size_mb }}M /swapfile
-    creates: /swapfile
+  when:
+    - not swapfile_stat.stat.exists
+    - not ansible_check_mode
   register: swapfile_created
 
 - name: Set swapfile permissions
@@ -55,19 +62,36 @@
     owner: root
     group: root
     mode: '0600'
+  when:
+    - not ansible_check_mode
+    - swapfile_stat.stat.exists or (swapfile_created is defined and swapfile_created.changed)
 
-- name: Initialize swapfile
+- name: Initialize new swapfile
   ansible.builtin.command:
     cmd: mkswap /swapfile
-  when: swapfile_created.changed
+  when:
+    - not ansible_check_mode
+    - swapfile_created is defined
+    - swapfile_created.changed
+
+- name: Check whether swapfile is active
+  ansible.builtin.shell:
+    cmd: swapon --show=NAME --noheadings | grep -Fxq /swapfile
+  register: swapfile_active
+  changed_when: false
+  failed_when: false
+  when: not ansible_check_mode
 
 - name: Enable swapfile
   ansible.builtin.command:
     cmd: swapon /swapfile
-  when: swapfile_created.changed
+  when:
+    - not ansible_check_mode
+    - swapfile_active.rc != 0
 
 - name: Persist swapfile in fstab
   ansible.builtin.lineinfile:
     path: /etc/fstab
     line: '/swapfile none swap sw 0 0'
     state: present
+
