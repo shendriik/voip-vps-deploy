@@ -42,3 +42,32 @@
   ansible.builtin.systemd:
     name: fail2ban
     enabled: true
+
+- name: Create swapfile
+  ansible.builtin.command:
+    cmd: fallocate -l {{ swap_size_mb }}M /swapfile
+    creates: /swapfile
+  register: swapfile_created
+
+- name: Set swapfile permissions
+  ansible.builtin.file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Initialize swapfile
+  ansible.builtin.command:
+    cmd: mkswap /swapfile
+  when: swapfile_created.changed
+
+- name: Enable swapfile
+  ansible.builtin.command:
+    cmd: swapon /swapfile
+  when: swapfile_created.changed
+
+- name: Persist swapfile in fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap sw 0 0'
+    state: present
