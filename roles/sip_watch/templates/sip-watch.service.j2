@@ -1,0 +1,17 @@
+[Unit]
+Description=Lightweight SIP transaction watcher
+After=network-online.target awg-quick@{{ awg_interface }}.service
+Wants=network-online.target
+Requires=awg-quick@{{ awg_interface }}.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/sip-watch.py
+Restart=always
+RestartSec=3
+User=root
+MemoryHigh={{ sip_watch_memory_high }}
+MemoryMax={{ sip_watch_memory_max }}
+
+[Install]
+WantedBy=multi-user.target

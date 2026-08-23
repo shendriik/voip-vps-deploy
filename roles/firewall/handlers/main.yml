@@ -1,0 +1,10 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Apply VoIP firewall
+  ansible.builtin.systemd:
+    name: voip-firewall
+    state: restarted
+    daemon_reload: true

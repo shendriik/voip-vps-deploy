@@ -1,0 +1,44 @@
+---
+- name: Install base prerequisites
+  ansible.builtin.apt:
+    name:
+      - software-properties-common
+      - ca-certificates
+      - curl
+      - gnupg
+      - python3
+      - python3-apt
+      - dkms
+      - linux-headers-generic
+      - iptables
+      - iptables-persistent
+      - fail2ban
+    state: present
+    update_cache: true
+
+- name: Add Amnezia PPA
+  ansible.builtin.apt_repository:
+    repo: ppa:amnezia/ppa
+    state: present
+    update_cache: true
+
+- name: Install AmneziaWG
+  ansible.builtin.apt:
+    name:
+      - amneziawg
+      - amneziawg-tools
+      - amneziawg-dkms
+    state: present
+
+- name: Enable IPv4 forwarding persistently
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Enable Fail2Ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true

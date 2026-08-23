@@ -1,0 +1,5 @@
+all:
+  hosts:
+    voip-vps:
+      ansible_connection: local
+      ansible_host: localhost

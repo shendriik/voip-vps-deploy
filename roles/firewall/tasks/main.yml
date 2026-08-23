@@ -1,0 +1,27 @@
+---
+- name: Install VoIP firewall script
+  ansible.builtin.template:
+    src: voip-firewall-apply.j2
+    dest: /usr/local/sbin/voip-firewall-apply
+    owner: root
+    group: root
+    mode: '0750'
+  notify: Apply VoIP firewall
+
+- name: Install VoIP firewall systemd service
+  ansible.builtin.template:
+    src: voip-firewall.service.j2
+    dest: /etc/systemd/system/voip-firewall.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Apply VoIP firewall
+
+- name: Enable and start VoIP firewall
+  ansible.builtin.systemd:
+    name: voip-firewall
+    enabled: true
+    state: started
+    daemon_reload: true

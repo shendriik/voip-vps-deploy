@@ -1,0 +1,36 @@
+[sip-bad-auth]
+enabled = true
+filter = sip-bad-auth
+logpath = {{ sip_watch_log }}
+backend = polling
+
+protocol = udp
+port = {{ sip_port }}
+
+maxretry = {{ sip_bad_auth_maxretry }}
+findtime = {{ sip_bad_auth_findtime }}
+bantime = {{ sip_bad_auth_bantime }}
+
+banaction = iptables-multiport
+chain = FORWARD
+
+ignoreip = 127.0.0.1/8 {{ bria_push_ips | join(' ') }}
+
+
+[sip-invite-scan]
+enabled = true
+filter = sip-invite-scan
+logpath = {{ sip_watch_log }}
+backend = polling
+
+protocol = udp
+port = {{ sip_port }}
+
+maxretry = {{ sip_invite_scan_maxretry }}
+findtime = {{ sip_invite_scan_findtime }}
+bantime = {{ sip_invite_scan_bantime }}
+
+banaction = iptables-multiport
+chain = FORWARD
+
+ignoreip = 127.0.0.1/8 {{ bria_push_ips | join(' ') }}

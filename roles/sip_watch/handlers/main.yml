@@ -1,0 +1,9 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart sip-watch
+  ansible.builtin.systemd:
+    name: sip-watch
+    state: restarted

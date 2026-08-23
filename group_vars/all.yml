@@ -1,0 +1,66 @@
+---
+# Network
+public_interface: eth0
+
+# PBX behind the tunnel
+pbx_ip: 192.168.2.12
+
+# Host-side AmneziaWG tunnel
+awg_interface: awg0
+awg_server_address: 192.168.101.1/24
+awg_server_ip: 192.168.101.1
+awg_client_ip: 192.168.101.2
+awg_listen_port: 43871
+
+awg_peer_public_key: "j3n4yD2ZOWC1blLGHAoa7hdR1UjPOWi626ndPX5qqgQ="
+
+awg_allowed_ips:
+  - 192.168.101.2/32
+  - 192.168.2.12/32
+
+# Amnezia obfuscation parameters
+awg_jc: 4
+awg_jmin: 40
+awg_jmax: 90
+
+awg_s1: 50
+awg_s2: 40
+awg_s3: 12
+awg_s4: 8
+
+awg_h1: 1234567
+awg_h2: 2345678
+awg_h3: 3456789
+awg_h4: 4567890
+
+awg_i1: "<r 128>"
+
+# VoIP
+sip_port: 5060
+rtp_port_start: 10000
+rtp_port_end: 20000
+
+bria_push_ips:
+  - 35.195.163.239
+  - 35.237.51.81
+
+# Fail2Ban
+sip_bad_auth_maxretry: 4
+sip_bad_auth_findtime: 10m
+sip_bad_auth_bantime: 6h
+
+sip_invite_scan_maxretry: 10
+sip_invite_scan_findtime: 1h
+sip_invite_scan_bantime: 24h
+
+# SIP watcher
+sip_watch_log: /var/log/sip-watch.log
+sip_watch_memory_high: 60M
+sip_watch_memory_max: 80M
+
+# System
+swap_size_mb: 2048
+
+# SIP flood protection
+sip_hashlimit_rate: 10/sec
+sip_hashlimit_burst: 30

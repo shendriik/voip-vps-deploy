@@ -1,0 +1,26 @@
+[Interface]
+Address = {{ awg_server_address }}
+ListenPort = {{ awg_listen_port }}
+PrivateKey = {{ vault_awg_private_key }}
+
+Jc = {{ awg_jc }}
+Jmin = {{ awg_jmin }}
+Jmax = {{ awg_jmax }}
+
+S1 = {{ awg_s1 }}
+S2 = {{ awg_s2 }}
+S3 = {{ awg_s3 }}
+S4 = {{ awg_s4 }}
+
+H1 = {{ awg_h1 }}
+H2 = {{ awg_h2 }}
+H3 = {{ awg_h3 }}
+H4 = {{ awg_h4 }}
+
+I1 = {{ awg_i1 }}
+
+[Peer]
+PublicKey = {{ awg_peer_public_key }}
+PresharedKey = {{ vault_awg_preshared_key }}
+
+AllowedIPs = {{ awg_allowed_ips | join(',') }}

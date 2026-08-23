@@ -1,0 +1,33 @@
+---
+- name: Configure VoIP VPS
+  hosts: voip-vps
+  connection: local
+  gather_facts: true
+
+  pre_tasks:
+    - name: Require root
+      ansible.builtin.assert:
+        that:
+          - ansible_user_uid == 0
+        fail_msg: "Run deployment as root."
+
+  roles:
+    - role: base
+      tags:
+        - base
+
+    - role: awg
+      tags:
+        - awg
+
+    - role: firewall
+      tags:
+        - firewall
+
+    - role: sip_watch
+      tags:
+        - watcher
+
+    - role: fail2ban
+      tags:
+        - fail2ban

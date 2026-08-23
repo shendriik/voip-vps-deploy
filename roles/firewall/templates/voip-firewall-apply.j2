@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PUBLIC_IF="{{ public_interface }}"
+AWG_IF="{{ awg_interface }}"
+PBX_IP="{{ pbx_ip }}"
+AWG_SERVER_IP="{{ awg_server_ip }}"
+
+SIP_PORT="{{ sip_port }}"
+RTP_START="{{ rtp_port_start }}"
+RTP_END="{{ rtp_port_end }}"
+
+FWD_CHAIN="VOIP-FORWARD"
+PRE_CHAIN="VOIP-PREROUTING"
+POST_CHAIN="VOIP-POSTROUTING"
+
+ensure_chain() {
+    local table="$1"
+    local chain="$2"
+
+    if ! iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+        iptables -t "$table" -N "$chain"
+    fi
+
+    iptables -t "$table" -F "$chain"
+}
+
+remove_all_jumps() {
+    local table="$1"
+    local parent="$2"
+    local target="$3"
+
+    while iptables -t "$table" -C "$parent" -j "$target" 2>/dev/null; do
+        iptables -t "$table" -D "$parent" -j "$target"
+    done
+}
+
+ensure_chain filter "$FWD_CHAIN"
+ensure_chain nat "$PRE_CHAIN"
+ensure_chain nat "$POST_CHAIN"
+
+{% for ip in bria_push_ips %}
+iptables -A "$FWD_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -o "$AWG_IF" \
+    -s "{{ ip }}" \
+    -d "$PBX_IP" \
+    -p udp \
+    --dport "$SIP_PORT" \
+    -j ACCEPT
+{% endfor %}
+
+iptables -A "$FWD_CHAIN" \
+    -i "$AWG_IF" \
+    -o "$PUBLIC_IF" \
+    -s "$PBX_IP" \
+    -m conntrack \
+    --ctstate RELATED,ESTABLISHED \
+    -j ACCEPT
+
+iptables -A "$FWD_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -o "$AWG_IF" \
+    -d "$PBX_IP" \
+    -p udp \
+    --dport "${RTP_START}:${RTP_END}" \
+    -j ACCEPT
+
+iptables -A "$FWD_CHAIN" \
+    -i "$AWG_IF" \
+    -o "$PUBLIC_IF" \
+    -s "$PBX_IP" \
+    -p udp \
+    --sport "$SIP_PORT" \
+    -m conntrack \
+    --ctstate RELATED,ESTABLISHED \
+    -j ACCEPT
+
+iptables -A "$FWD_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -o "$AWG_IF" \
+    -d "$PBX_IP" \
+    -p udp \
+    --dport "$SIP_PORT" \
+    -m hashlimit \
+    --hashlimit-upto "{{ sip_hashlimit_rate }}" \
+    --hashlimit-burst "{{ sip_hashlimit_burst }}" \
+    --hashlimit-mode srcip \
+    --hashlimit-name sip5060 \
+    -j ACCEPT
+
+iptables -A "$FWD_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -o "$AWG_IF" \
+    -d "$PBX_IP" \
+    -p udp \
+    --dport "$SIP_PORT" \
+    -j DROP
+
+iptables -A "$FWD_CHAIN" -j RETURN
+
+# DNAT — без публичного IP VPS.
+iptables -t nat -A "$PRE_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -m addrtype \
+    --dst-type LOCAL \
+    -p udp \
+    --dport "$SIP_PORT" \
+    -j DNAT \
+    --to-destination "${PBX_IP}:${SIP_PORT}"
+
+iptables -t nat -A "$PRE_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -m addrtype \
+    --dst-type LOCAL \
+    -p udp \
+    --dport "${RTP_START}:${RTP_END}" \
+    -j DNAT \
+    --to-destination "$PBX_IP"
+
+iptables -t nat -A "$PRE_CHAIN" -j RETURN
+
+# SNAT в сторону PBX через AWG.
+iptables -t nat -A "$POST_CHAIN" \
+    -o "$AWG_IF" \
+    -d "$PBX_IP" \
+    -p udp \
+    --dport "$SIP_PORT" \
+    -j SNAT \
+    --to-source "$AWG_SERVER_IP"
+
+iptables -t nat -A "$POST_CHAIN" \
+    -o "$AWG_IF" \
+    -d "$PBX_IP" \
+    -p udp \
+    --dport "${RTP_START}:${RTP_END}" \
+    -j SNAT \
+    --to-source "$AWG_SERVER_IP"
+
+iptables -t nat -A "$POST_CHAIN" -j RETURN
+
+# FORWARD: Fail2Ban должен оставаться выше наших ACCEPT.
+remove_all_jumps filter FORWARD "$FWD_CHAIN"
+
+last_f2b_line="$(
+    iptables -nL FORWARD --line-numbers |
+    awk '
+        $2 ~ /^f2b-/ { line=$1 }
+        END {
+            if (line != "")
+                print line
+        }
+    '
+)"
+
+if [[ -n "$last_f2b_line" ]]; then
+    iptables -I FORWARD "$((last_f2b_line + 1))" -j "$FWD_CHAIN"
+else
+    iptables -I FORWARD 1 -j "$FWD_CHAIN"
+fi
+
+# NAT anchors.
+remove_all_jumps nat PREROUTING "$PRE_CHAIN"
+iptables -t nat -I PREROUTING 1 -j "$PRE_CHAIN"
+
+remove_all_jumps nat POSTROUTING "$POST_CHAIN"
+iptables -t nat -I POSTROUTING 1 -j "$POST_CHAIN"
+
+echo "VoIP firewall applied successfully."

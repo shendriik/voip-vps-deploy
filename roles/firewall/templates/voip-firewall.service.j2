@@ -1,0 +1,13 @@
+[Unit]
+Description=VoIP gateway firewall and NAT
+After=network-online.target awg-quick@{{ awg_interface }}.service
+Wants=network-online.target
+Requires=awg-quick@{{ awg_interface }}.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/voip-firewall-apply
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

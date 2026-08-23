@@ -1,0 +1,39 @@
+---
+- name: Install sip-bad-auth filter
+  ansible.builtin.copy:
+    src: sip-bad-auth.conf
+    dest: /etc/fail2ban/filter.d/sip-bad-auth.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart fail2ban
+
+- name: Install sip-invite-scan filter
+  ansible.builtin.copy:
+    src: sip-invite-scan.conf
+    dest: /etc/fail2ban/filter.d/sip-invite-scan.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart fail2ban
+
+- name: Install SIP Fail2Ban jails
+  ansible.builtin.template:
+    src: sip-watch.local.j2
+    dest: /etc/fail2ban/jail.d/sip-watch.local
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart fail2ban
+
+- name: Disable legacy Asterisk jail if present
+  ansible.builtin.file:
+    path: /etc/fail2ban/jail.d/asterisk.local
+    state: absent
+  notify: Restart fail2ban
+
+- name: Enable Fail2Ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started

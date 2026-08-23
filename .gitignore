@@ -1,0 +1,19 @@
+.vault_pass
+*.key
+*.pem
+*.private
+*.bak
+*.retry
+__pycache__/
+
+# Local migration snapshot
+snapshot/
+
+# Vault passwords
+.vault_pass
+.voip-vault-pass
+
+# Editor temporary files
+*.swp
+*.swo
+*~

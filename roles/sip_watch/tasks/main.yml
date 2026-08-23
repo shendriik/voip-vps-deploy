@@ -1,0 +1,35 @@
+---
+- name: Install SIP watcher
+  ansible.builtin.copy:
+    src: sip-watch.py
+    dest: /usr/local/sbin/sip-watch.py
+    owner: root
+    group: root
+    mode: '0750'
+  notify: Restart sip-watch
+
+- name: Install SIP watcher systemd unit
+  ansible.builtin.template:
+    src: sip-watch.service.j2
+    dest: /etc/systemd/system/sip-watch.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart sip-watch
+
+- name: Install SIP watcher logrotate config
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/sip-watch
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable SIP watcher
+  ansible.builtin.systemd:
+    name: sip-watch
+    enabled: true
+    state: started
+    daemon_reload: true
