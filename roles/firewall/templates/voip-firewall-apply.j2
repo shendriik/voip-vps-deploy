@@ -76,6 +76,15 @@ iptables -A "$FWD_CHAIN" \
     --ctstate RELATED,ESTABLISHED \
     -j ACCEPT
 
+# SIP over TCP (used by Bria on LTE).
+iptables -A "$FWD_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -o "$AWG_IF" \
+    -d "$PBX_IP" \
+    -p tcp \
+    --dport "$SIP_PORT" \
+    -j ACCEPT
+
 iptables -A "$FWD_CHAIN" \
     -i "$PUBLIC_IF" \
     -o "$AWG_IF" \
@@ -104,6 +113,15 @@ iptables -t nat -A "$PRE_CHAIN" \
     -i "$PUBLIC_IF" \
     -m addrtype \
     --dst-type LOCAL \
+    -p tcp \
+    --dport "$SIP_PORT" \
+    -j DNAT \
+    --to-destination "${PBX_IP}:${SIP_PORT}"
+
+iptables -t nat -A "$PRE_CHAIN" \
+    -i "$PUBLIC_IF" \
+    -m addrtype \
+    --dst-type LOCAL \
     -p udp \
     --dport "$SIP_PORT" \
     -j DNAT \
@@ -121,6 +139,14 @@ iptables -t nat -A "$PRE_CHAIN" \
 iptables -t nat -A "$PRE_CHAIN" -j RETURN
 
 # SNAT в сторону PBX через AWG.
+iptables -t nat -A "$POST_CHAIN" \
+    -o "$AWG_IF" \
+    -d "$PBX_IP" \
+    -p tcp \
+    --dport "$SIP_PORT" \
+    -j SNAT \
+    --to-source "$AWG_SERVER_IP"
+
 iptables -t nat -A "$POST_CHAIN" \
     -o "$AWG_IF" \
     -d "$PBX_IP" \
